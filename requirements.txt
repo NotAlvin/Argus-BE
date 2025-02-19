@@ -1,0 +1,8 @@
+beautifulsoup4==4.11.2
+pandas==2.2.3
+pydantic==2.9.2
+pymongo==4.3.3
+python_dateutil==2.9.0.post0
+Requests==2.32.3
+selenium==4.26.1
+tqdm==4.65.0

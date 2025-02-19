@@ -3,6 +3,10 @@ from typing import Optional, List, Dict
 from datetime import datetime
 
 class NewsArticle(BaseModel):
+    category: Optional[str] = Field(
+        description="The category of the news article",
+        example=""
+    )
     headline: str = Field(
         description="The headline of the news article",
         example="Apple Inc. Reports Record Quarterly Earnings"

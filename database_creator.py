@@ -110,7 +110,7 @@ def scrape_all_pages_and_save_to_csv(total_pages: int = 500, start_page: int = 1
     df.to_csv(output_file, index=False)
     print(f"Final data saved to {output_file}")
 
-def extract_insider_info(name: str, url: str) -> Insider:
+def extract_insider_info(name: str, url: str) -> dict:
     response = requests.get(complete_href(url), headers=get_random_user_agent())
     response.raise_for_status()  # Raise an error for bad responses
 
@@ -256,7 +256,7 @@ def extract_insider_info(name: str, url: str) -> Insider:
         former_positions=former_positions,
         trainings=trainings,
         link=url
-    )
+    ).dict()
 
 def save_to_csv(insiders_data: list[Insider], output_file: str):
     df = pd.DataFrame([insider.dict() for insider in insiders_data])
@@ -452,15 +452,12 @@ def scrape_company_names_and_urls(output_filename: str):
     stock_sectors = pd.read_csv(output_filename)
     stock_sectors.apply(lambda row: scrape_stock_data(row['url'], row['category']), axis=1)
 
-def extract_company_info(url: str) -> dict[str, dict[str, dict[str, dict[str, str]]]]:
+def extract_company_info(url: str):
     """
-    Extracts executives information from the given URL.
+    Extracts company information from the given URL.
 
     Args:
         url (str): The URL of the page to scrape.
-
-    Returns:
-        Dict[str, Dict[str, Dict[str, Dict[str, str]]]]: A dictionary containing executives information.
     """
     # Adjust URL for contact and executives information
     url = url +  '/company-governance/'
@@ -473,6 +470,9 @@ def extract_company_info(url: str) -> dict[str, dict[str, dict[str, dict[str, st
         return {}
 
     soup = BeautifulSoup(urllib.parse.unquote(response.text), 'html.parser')
+
+    # Find company name
+    company_name = soup.find('h1').text.strip()
 
     # Find the stock ticker and ISIN
     badges = soup.find_all('h2', class_='m-0 badge txt-b5 txt-s1')
@@ -535,7 +535,7 @@ def extract_company_info(url: str) -> dict[str, dict[str, dict[str, dict[str, st
                             'href': manager_href,
                             'positions': positions
                         }
-    return ticker, isin, company_profile, executives
+    return company_name, ticker, isin, company_profile, executives
 
 def scrape_all_companies():
     df = pd.read_csv('database/categories_links.csv')
@@ -553,7 +553,7 @@ def scrape_all_companies():
             name = row['Stock Name']
             sector = row['Sector']
             url = row['Link']
-            ticker, isin, company_profile, executives = extract_company_info(url)
+            company_name, ticker, isin, company_profile, executives = extract_company_info(url)
             # Append company data to the list
             companies_data.append({
                 'name': name,
@@ -672,9 +672,10 @@ def extract_marketscreener_article(url: str) -> str:
         return extract_article_text(soup)
     except Exception as e:
         return f'Error with extracting article text: {e}'
+    
 def get_article_from_link(article_link: str):
     soup = fetch_html_content(article_link)
-    soup = BeautifulSoup(soup)
+    soup = BeautifulSoup(soup, 'html.parser')
     article_content = extract_article_text(soup)
     article_headline = soup.find('title').get_text(separator='\n', strip=True)
     # Extract the date and title attributes

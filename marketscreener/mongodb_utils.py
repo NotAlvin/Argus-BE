@@ -1,27 +1,32 @@
 from utils.config import DATABASE_CONNECTION_URL, DB_NAME
 from pymongo import MongoClient, collection
 
+
 def get_db_client() -> MongoClient:
     return MongoClient(DATABASE_CONNECTION_URL)
+
 
 def get_db_collection(
         db_name: str,
         collection_name: str
-    ) -> collection.Collection:
+        ) -> collection.Collection:
     client = get_db_client()
     return client[db_name][collection_name]
+
 
 def get_db_client_and_collection(
         db_name: str, 
         collection_name: str
-    ) -> tuple[MongoClient, collection.Collection]:
+        ) -> tuple[MongoClient, collection.Collection]:
     client = get_db_client()
     collection = get_db_collection(db_name, collection_name)
     return client, collection
 
+
 def search_by_regex(collection_name: str, search_term: str):
-    client, collection = get_db_client_and_collection(DB_NAME, collection_name)
+    _, collection = get_db_client_and_collection(DB_NAME, collection_name)
     return collection.find({"name": {"$regex": search_term, "$options": "i"}})
+
 
 def search_db(collection_name: str, search_term: str):
     """
